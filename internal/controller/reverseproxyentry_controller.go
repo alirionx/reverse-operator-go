@@ -28,6 +28,18 @@ type ReverseProxyEntryReconciler struct {
 // +kubebuilder:rbac:groups=reverse-proxy.app-scape.de,resources=reverseproxyentries/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=reverse-proxy.app-scape.de,resources=reverseproxyentries/finalizers,verbs=update
 
+// +kubebuilder:rbac:groups="",resources=services,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups="",resources=services/status,verbs=update
+// +kubebuilder:rbac:groups="",resources=services/finalizers,verbs=update
+
+// +kubebuilder:rbac:groups=discovery.k8s.io,resources=endpointslices,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=discovery.k8s.io,resources=endpointslices/status,verbs=update
+// +kubebuilder:rbac:groups=discovery.k8s.io,resources=endpointslices/finalizers,verbs=update
+
+// +kubebuilder:rbac:groups=networking.k8s.io,resources=ingresses,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=networking.k8s.io,resources=ingresses/status,verbs=update
+// +kubebuilder:rbac:groups=networking.k8s.io,resources=ingresses/finalizers,verbs=update
+
 func (r *ReverseProxyEntryReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = logf.FromContext(ctx)
 
