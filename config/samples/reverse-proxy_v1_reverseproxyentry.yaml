@@ -1,0 +1,9 @@
+apiVersion: reverse-proxy.app-scape.de/v1
+kind: ReverseProxyEntry
+metadata:
+  labels:
+    app.kubernetes.io/name: reverse-operator-go
+    app.kubernetes.io/managed-by: kustomize
+  name: reverseproxyentry-sample
+spec:
+  # TODO(user): Add fields here

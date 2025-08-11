@@ -1,0 +1,414 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: reverse-operator-go
+    control-plane: controller-manager
+  name: reverse-operator-go-system
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.18.0
+  name: reverseproxyentries.reverse-proxy.app-scape.de
+spec:
+  group: reverse-proxy.app-scape.de
+  names:
+    kind: ReverseProxyEntry
+    listKind: ReverseProxyEntryList
+    plural: reverseproxyentries
+    singular: reverseproxyentry
+  scope: Namespaced
+  versions:
+  - name: v1
+    schema:
+      openAPIV3Schema:
+        description: ReverseProxyEntry is the Schema for the reverseproxyentries API
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: spec defines the desired state of ReverseProxyEntry
+            properties:
+              ingress:
+                properties:
+                  annotations:
+                    additionalProperties:
+                      type: string
+                    type: object
+                  className:
+                    default: nginx
+                    type: string
+                  host:
+                    type: string
+                  secretName:
+                    type: string
+                  targetProtocol:
+                    default: http
+                    type: string
+                  tls:
+                    default: false
+                    type: boolean
+                required:
+                - className
+                - host
+                - targetProtocol
+                - tls
+                type: object
+              target:
+                properties:
+                  endpoints:
+                    items:
+                      type: string
+                    minItems: 1
+                    type: array
+                  port:
+                    type: integer
+                required:
+                - endpoints
+                - port
+                type: object
+            required:
+            - ingress
+            - target
+            type: object
+          status:
+            description: status defines the observed state of ReverseProxyEntry
+            type: object
+        required:
+        - spec
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: reverse-operator-go
+  name: reverse-operator-go-controller-manager
+  namespace: reverse-operator-go-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: reverse-operator-go
+  name: reverse-operator-go-leader-election-role
+  namespace: reverse-operator-go-system
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - patch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: reverse-operator-go-manager-role
+rules:
+- apiGroups:
+  - reverse-proxy.app-scape.de
+  resources:
+  - reverseproxyentries
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - reverse-proxy.app-scape.de
+  resources:
+  - reverseproxyentries/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - reverse-proxy.app-scape.de
+  resources:
+  - reverseproxyentries/status
+  verbs:
+  - get
+  - patch
+  - update
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: reverse-operator-go-metrics-auth-role
+rules:
+- apiGroups:
+  - authentication.k8s.io
+  resources:
+  - tokenreviews
+  verbs:
+  - create
+- apiGroups:
+  - authorization.k8s.io
+  resources:
+  - subjectaccessreviews
+  verbs:
+  - create
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: reverse-operator-go-metrics-reader
+rules:
+- nonResourceURLs:
+  - /metrics
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: reverse-operator-go
+  name: reverse-operator-go-reverseproxyentry-admin-role
+rules:
+- apiGroups:
+  - reverse-proxy.app-scape.de
+  resources:
+  - reverseproxyentries
+  verbs:
+  - '*'
+- apiGroups:
+  - reverse-proxy.app-scape.de
+  resources:
+  - reverseproxyentries/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: reverse-operator-go
+  name: reverse-operator-go-reverseproxyentry-editor-role
+rules:
+- apiGroups:
+  - reverse-proxy.app-scape.de
+  resources:
+  - reverseproxyentries
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - reverse-proxy.app-scape.de
+  resources:
+  - reverseproxyentries/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: reverse-operator-go
+  name: reverse-operator-go-reverseproxyentry-viewer-role
+rules:
+- apiGroups:
+  - reverse-proxy.app-scape.de
+  resources:
+  - reverseproxyentries
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - reverse-proxy.app-scape.de
+  resources:
+  - reverseproxyentries/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: reverse-operator-go
+  name: reverse-operator-go-leader-election-rolebinding
+  namespace: reverse-operator-go-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: reverse-operator-go-leader-election-role
+subjects:
+- kind: ServiceAccount
+  name: reverse-operator-go-controller-manager
+  namespace: reverse-operator-go-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: reverse-operator-go
+  name: reverse-operator-go-manager-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: reverse-operator-go-manager-role
+subjects:
+- kind: ServiceAccount
+  name: reverse-operator-go-controller-manager
+  namespace: reverse-operator-go-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: reverse-operator-go-metrics-auth-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: reverse-operator-go-metrics-auth-role
+subjects:
+- kind: ServiceAccount
+  name: reverse-operator-go-controller-manager
+  namespace: reverse-operator-go-system
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: reverse-operator-go
+    control-plane: controller-manager
+  name: reverse-operator-go-controller-manager-metrics-service
+  namespace: reverse-operator-go-system
+spec:
+  ports:
+  - name: https
+    port: 8443
+    protocol: TCP
+    targetPort: 8443
+  selector:
+    app.kubernetes.io/name: reverse-operator-go
+    control-plane: controller-manager
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: reverse-operator-go
+    control-plane: controller-manager
+  name: reverse-operator-go-controller-manager
+  namespace: reverse-operator-go-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: reverse-operator-go
+      control-plane: controller-manager
+  template:
+    metadata:
+      annotations:
+        kubectl.kubernetes.io/default-container: manager
+      labels:
+        app.kubernetes.io/name: reverse-operator-go
+        control-plane: controller-manager
+    spec:
+      containers:
+      - args:
+        - --metrics-bind-address=:8443
+        - --leader-elect
+        - --health-probe-bind-address=:8081
+        command:
+        - /manager
+        image: ghcr.io/alirionx/reverse-operator-go:latest
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8081
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        name: manager
+        ports: []
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: 8081
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        resources:
+          limits:
+            cpu: 500m
+            memory: 128Mi
+          requests:
+            cpu: 10m
+            memory: 64Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+        volumeMounts: []
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      serviceAccountName: reverse-operator-go-controller-manager
+      terminationGracePeriodSeconds: 10
+      volumes: []

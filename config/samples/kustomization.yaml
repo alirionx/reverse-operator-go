@@ -1,0 +1,4 @@
+## Append samples of your project ##
+resources:
+- reverse-proxy_v1_reverseproxyentry.yaml
+# +kubebuilder:scaffold:manifestskustomizesamples
