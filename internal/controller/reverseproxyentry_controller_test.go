@@ -51,7 +51,19 @@ var _ = Describe("ReverseProxyEntry Controller", func() {
 						Name:      resourceName,
 						Namespace: "default",
 					},
-					// TODO(user): Specify other spec details if needed.
+					Spec: reverseproxyv1.ReverseProxyEntrySpec{
+						Target: reverseproxyv1.Target{
+							Endpoints: []string{"192.168.0.100"},
+							Port:      8080,
+						},
+						Ingress: reverseproxyv1.Ingress{
+							ClassName:      "nginx",
+							TargetProtocol: "http",
+							Host:           func(s string) *string { return &s }("test.app-scape.de"),
+							TLS:            false,
+							SecretName:     "",
+						},
+					},
 				}
 				Expect(k8sClient.Create(ctx, resource)).To(Succeed())
 			}
